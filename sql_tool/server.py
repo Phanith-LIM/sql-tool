@@ -39,7 +39,7 @@ def format_value(val):
     return str(val)
 
 @mcp.tool(
-    name="all_table_names_{PREFIX}",
+    name=f"{PREFIX}_all_table_names",
     description=f"Return all table names in the database separated by comma. {DB_INFO}"
 )
 def all_table_names() -> str:
@@ -48,7 +48,7 @@ def all_table_names() -> str:
     return ", ".join(inspector.get_table_names())
 
 @mcp.tool(
-    name="filter_table_names_{PREFIX}",
+    name=f"{PREFIX}_filter_table_names",
     description=f"Return all table names in the database containing the substring 'q' separated by comma. {DB_INFO}"
 )
 def filter_table_names(q: str) -> str:
@@ -57,7 +57,7 @@ def filter_table_names(q: str) -> str:
     return ", ".join(x for x in inspector.get_table_names() if q in x)
 
 @mcp.tool(
-    name="schema_definitions_{PREFIX}",
+    name=f"{PREFIX}_schema_definitions",
     description=f"Returns schema and relation information for the given tables. {DB_INFO}"
 )
 def schema_definitions(table_names: list[str]) -> str:
@@ -89,7 +89,7 @@ def schema_definitions(table_names: list[str]) -> str:
         return "\n".join(result)
 
 @mcp.tool(
-    name="execute_query_{PREFIX}",
+    name=f"{PREFIX}_execute_query",
     description="Executes a SQL query against the database and returns the results."
 )
 def execute_query(query: str, params: dict = {}) -> str:
