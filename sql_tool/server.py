@@ -1,9 +1,12 @@
 import os
 from datetime import datetime, date
 from sqlalchemy import create_engine, text, inspect
-from mcp.server.fastmcp import FastMCP
+from mcp.server import FastMCP
 
-mcp = FastMCP("SQL Tools")
+mcp = FastMCP(
+    "SQL Tool",
+    description="A tool for executing SQL queries and retrieving database schema information.",
+)
 
 def get_engine(readonly=True):
     return create_engine(
@@ -34,28 +37,19 @@ def format_value(val):
         return val.isoformat()
     return val  # keep None or native types
 
-@mcp.tool(
-    name=f"{PREFIX}_all_table_names",
-    description=f"Return all table names in the database. {DB_INFO}"
-)
+@mcp.tool(name=f"{PREFIX}_all_table_names",description=f"Return all table names in the {PREFIX} database. {DB_INFO}")
 def all_table_names() -> list[str]:
     engine = get_engine()
     inspector = inspect(engine)
     return inspector.get_table_names()
 
-@mcp.tool(
-    name=f"{PREFIX}_filter_table_names",
-    description=f"Return all table names in the database containing the substring. {DB_INFO}"
-)
+@mcp.tool(name=f"{PREFIX}_filter_table_names", description=f"Return all table names in the {PREFIX} database containing the substring. {DB_INFO}")
 def filter_table_names(q: str) -> list[str]:
     engine = get_engine()
     inspector = inspect(engine)
     return [x for x in inspector.get_table_names() if q in x]
 
-@mcp.tool(
-    name=f"{PREFIX}_schema_definitions",
-    description=f"Returns schema and relation information for the given tables. {DB_INFO}"
-)
+@mcp.tool(name=f"{PREFIX}_schema_definitions", description=f"Returns schema and relation information for the given tables. {DB_INFO}")
 def schema_definitions(table_names: list[str]) -> dict:
     engine = get_engine()
     inspector = inspect(engine)
@@ -86,10 +80,7 @@ def schema_definitions(table_names: list[str]) -> dict:
 
     return schema_data
 
-@mcp.tool(
-    name=f"{PREFIX}_execute_query",
-    description=f"Executes a SQL query against the database and returns the results. {DB_INFO}"
-)
+@mcp.tool(name=f"{PREFIX}_execute_query",description=f"Executes a SQL query against the database and returns the results. {DB_INFO}")
 def execute_query(query: str, params: dict = {}) -> dict:
     engine = get_engine()
     try:
