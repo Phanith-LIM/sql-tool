@@ -21,19 +21,13 @@ pip install "git+https://github.com/Phanith-LIM/sql-tool.git"
 uv add "git@+github.com:Phanith-LIM/sql-tool.git"
 ```
 ## Usage
+Start the server with the following command:
 ```python
 res_sqlite = StdioServerParameters(
-        command= "uv",
-		args= ["run", "sql-tool"],
-        env= {
-            "DB_URL": "sqlite:///titanic.db",
-        }
-    )
-res_postgres = StdioServerParameters(
-        command= "uv",
-        args= ["run", "sql-tool"],
-        env= {
-            "DB_URL": "postgresql://user:password@localhost:5432/titanic",
-        }
-    )
+    command= "uv",
+	args= ["run", "sql-tool"],
+    env= {
+        "DB_URL": "sqlite:///titanic.db",
+    }
+)
 ```
