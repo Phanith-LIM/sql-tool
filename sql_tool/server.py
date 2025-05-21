@@ -37,17 +37,21 @@ def format_value(val):
         return val.isoformat()
     return val  # keep None or native types
 
-@mcp.tool(name=f"{PREFIX}_all_table_names",description=f"Return all table names in the {PREFIX} database. {DB_INFO}")
-def all_table_names() -> list[str]:
+@mcp.tool(name=f"{PREFIX}_all_table_names", description=f"Return all table names in the database separated by comma. {DB_INFO}")
+def all_table_names() -> str:
     engine = get_engine()
     inspector = inspect(engine)
-    return inspector.get_table_names()
+    return ", ".join(inspector.get_table_names())
 
-@mcp.tool(name=f"{PREFIX}_filter_table_names", description=f"Return all table names in the {PREFIX} database containing the substring. {DB_INFO}")
-def filter_table_names(q: str) -> list[str]:
+
+@mcp.tool(
+    name=f"{PREFIX}_filter_table_names",
+    description=f"Return all table names in the database containing the substring 'q' separated by comma. {DB_INFO}"
+)
+def filter_table_names(q: str) -> str:
     engine = get_engine()
     inspector = inspect(engine)
-    return [x for x in inspector.get_table_names() if q in x]
+    return ", ".join(x for x in inspector.get_table_names() if q in x)
 
 @mcp.tool(name=f"{PREFIX}_schema_definitions", description=f"Returns schema and relation information for the given tables. {DB_INFO}")
 def schema_definitions(table_names: list[str]) -> dict:
@@ -80,7 +84,17 @@ def schema_definitions(table_names: list[str]) -> dict:
 
     return schema_data
 
-@mcp.tool(name=f"{PREFIX}_execute_query",description=f"Executes a SQL query against the database and returns the results. {DB_INFO}")
+def execute_query_description():
+    parts = [
+        f"Execute a SQL query and return results in a readable format. Results will be truncated after {EXECUTE_QUERY_MAX_CHARS} characters."
+    ]
+    parts.append(
+        "IMPORTANT: Always use the params parameter for query parameter substitution (e.g. 'WHERE id = :id' with "
+        "params={'id': 123}) to prevent SQL injection. Direct string concatenation is a serious security risk.")
+    parts.append(DB_INFO)
+    return " ".join(parts)
+
+@mcp.tool(name=f"{PREFIX}_execute_query", description=execute_query_description())
 def execute_query(query: str, params: dict = {}) -> dict:
     engine = get_engine()
     try:
