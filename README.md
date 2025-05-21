@@ -23,9 +23,9 @@ uv add "https://github.com/Phanith-LIM/sql-tool.git"
 Start the server with the following command:
 ```python
 res_sqlite = StdioServerParameters(
-    command= "uv",
-	args= ["run", "sql-tool"],
-    env= {
+    command="uv",
+	args=["run", "sql-tool"],
+    env={
         "DB_URL": "sqlite:///titanic.db",
     }
 )
