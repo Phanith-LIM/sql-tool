@@ -11,106 +11,101 @@ def get_engine(readonly=True):
         isolation_level='AUTOCOMMIT',
         execution_options={'readonly': readonly}
     )
-    
+
 def get_db_info():
     engine = get_engine(readonly=True)
     with engine.connect():
         url = engine.url
-        result = [
-            f"Connected to {engine.dialect.name}",
-            f"version {'.'.join(str(x) for x in engine.dialect.server_version_info)}",
-            f"database {url.database}",
-        ]
-        if url.host:
-            result.append(f"on {url.host}")
-        if url.username:
-            result.append(f"as user {url.username}")
-        return " ".join(result) + "."
-    
+        result = {
+            "dialect": engine.dialect.name,
+            "version": list(engine.dialect.server_version_info),
+            "database": url.database,
+            "host": url.host,
+            "user": url.username
+        }
+        return result
+
 DB_INFO = get_db_info()
 PREFIX = os.environ.get('PREFIX', 'sql_tool')
 EXECUTE_QUERY_MAX_CHARS = int(os.environ.get('EXECUTE_QUERY_MAX_CHARS', 4000))
 
 def format_value(val):
-    if val is None:
-        return "NULL"
     if isinstance(val, (datetime, date)):
         return val.isoformat()
-    return str(val)
+    return val  # keep None or native types
 
 @mcp.tool(
     name=f"{PREFIX}_all_table_names",
-    description=f"Return all table names in the database separated by comma. {DB_INFO}"
+    description=f"Return all table names in the database. {DB_INFO}"
 )
-def all_table_names() -> str:
+def all_table_names() -> list[str]:
     engine = get_engine()
     inspector = inspect(engine)
-    return ", ".join(inspector.get_table_names())
+    return inspector.get_table_names()
 
 @mcp.tool(
     name=f"{PREFIX}_filter_table_names",
-    description=f"Return all table names in the database containing the substring 'q' separated by comma. {DB_INFO}"
+    description=f"Return all table names in the database containing the substring. {DB_INFO}"
 )
-def filter_table_names(q: str) -> str:
+def filter_table_names(q: str) -> list[str]:
     engine = get_engine()
     inspector = inspect(engine)
-    return ", ".join(x for x in inspector.get_table_names() if q in x)
+    return [x for x in inspector.get_table_names() if q in x]
 
 @mcp.tool(
     name=f"{PREFIX}_schema_definitions",
     description=f"Returns schema and relation information for the given tables. {DB_INFO}"
 )
-def schema_definitions(table_names: list[str]) -> str:
-    def format(inspector, table_name):
-        columns = inspector.get_columns(table_name)
-        foreign_keys = inspector.get_foreign_keys(table_name)
-        primary_keys = set(inspector.get_pk_constraint(table_name)["constrained_columns"])
-        result = [f"{table_name}:"]
+def schema_definitions(table_names: list[str]) -> dict:
+    engine = get_engine()
+    inspector = inspect(engine)
+    schema_data = {}
 
-        # Process columns
-        show_key_only = {"nullable", "autoincrement"}
-        for column in columns:
-            if "comment" in column:
-                del column["comment"]
-            name = column.pop("name")
-            column_parts = (["primary key"] if name in primary_keys else []) + [str(
-                column.pop("type"))] + [k if k in show_key_only else f"{k}={v}" for k, v in column.items() if v]
-            result.append(f"    {name}: " + ", ".join(column_parts))
+    for table in table_names:
+        columns = inspector.get_columns(table)
+        foreign_keys = inspector.get_foreign_keys(table)
+        primary_keys = set(inspector.get_pk_constraint(table)["constrained_columns"])
 
-        # Process relationships
-        if foreign_keys:
-            result.extend(["", "    Relationships:"])
-            for fk in foreign_keys:
-                constrained_columns = ", ".join(fk['constrained_columns'])
-                referred_table = fk['referred_table']
-                referred_columns = ", ".join(fk['referred_columns'])
-                result.append(f"      {constrained_columns} -> {referred_table}.{referred_columns}")
+        schema_data[table] = {
+            "columns": [
+                {
+                    **{k: v for k, v in col.items() if k != "comment"},
+                    "primary_key": col["name"] in primary_keys
+                }
+                for col in columns
+            ],
+            "relationships": [
+                {
+                    "constrained_columns": fk["constrained_columns"],
+                    "referred_table": fk["referred_table"],
+                    "referred_columns": fk["referred_columns"]
+                }
+                for fk in foreign_keys
+            ]
+        }
 
-        return "\n".join(result)
+    return schema_data
 
 @mcp.tool(
     name=f"{PREFIX}_execute_query",
-    description="Executes a SQL query against the database and returns the results."
+    description=f"Executes a SQL query against the database and returns the results. {DB_INFO}"
 )
-def execute_query(query: str, params: dict = {}) -> str:
+def execute_query(query: str, params: dict = {}) -> dict:
     engine = get_engine()
     try:
         with engine.connect() as conn:
-            result = conn.execute(text(query), params or {})  # Ensure params is not None
-
+            result = conn.execute(text(query), params or {})
             if query.strip().upper().startswith("SELECT"):
                 rows = result.fetchall()
-                if rows:
-                    header = " | ".join(result.keys())
-                    lines = [" | ".join(format_value(v) for v in row) for row in rows]
-                    return header + "\n" + "-" * len(header) + "\n" + "\n".join(lines)
-                else:
-                    return "No results found."
+                columns = result.keys()
+                return {
+                    "columns": list(columns),
+                    "rows": [[format_value(val) for val in row] for row in rows]
+                }
             else:
-                return "Query executed successfully."
-
+                return {"status": "ok"}
     except Exception as e:
-        return f"Error executing query: {e}"
+        return {"error": str(e)}
 
 def main():
     mcp.run()
