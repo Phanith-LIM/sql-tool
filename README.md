@@ -11,8 +11,7 @@
 - Read-only and write modes supported
 
 ## Installation
-
-Clone the repository and install dependencies:
+To install dependencies:
 
 ```sh
 pip install "git+https://github.com/Phanith-LIM/sql-tool.git"
