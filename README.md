@@ -27,6 +27,7 @@ res_sqlite = StdioServerParameters(
 	args=["run", "sql-tool"],
     env={
         "DB_URL": "sqlite:///titanic.db",
+        "PREFIX": "titanic",
     }
 )
 ```
