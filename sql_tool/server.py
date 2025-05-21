@@ -28,6 +28,7 @@ def get_db_info():
         return " ".join(result) + "."
     
 DB_INFO = get_db_info()
+PREFIX = os.environ.get('PREFIX', 'sql_tool')
 EXECUTE_QUERY_MAX_CHARS = int(os.environ.get('EXECUTE_QUERY_MAX_CHARS', 4000))
 
 def format_value(val):
@@ -37,19 +38,28 @@ def format_value(val):
         return val.isoformat()
     return str(val)
 
-@mcp.tool(description=f"Return all table names in the database separated by comma. {DB_INFO}")
+@mcp.tool(
+    name="all_table_names_{PREFIX}",
+    description=f"Return all table names in the database separated by comma. {DB_INFO}"
+)
 def all_table_names() -> str:
     engine = get_engine()
     inspector = inspect(engine)
     return ", ".join(inspector.get_table_names())
 
-@mcp.tool(description=f"Return all table names in the database containing the substring 'q' separated by comma. {DB_INFO}")
+@mcp.tool(
+    name="filter_table_names_{PREFIX}",
+    description=f"Return all table names in the database containing the substring 'q' separated by comma. {DB_INFO}"
+)
 def filter_table_names(q: str) -> str:
     engine = get_engine()
     inspector = inspect(engine)
     return ", ".join(x for x in inspector.get_table_names() if q in x)
 
-@mcp.tool(description=f"Returns schema and relation information for the given tables. {DB_INFO}")
+@mcp.tool(
+    name="schema_definitions_{PREFIX}",
+    description=f"Returns schema and relation information for the given tables. {DB_INFO}"
+)
 def schema_definitions(table_names: list[str]) -> str:
     def format(inspector, table_name):
         columns = inspector.get_columns(table_name)
@@ -78,7 +88,10 @@ def schema_definitions(table_names: list[str]) -> str:
 
         return "\n".join(result)
 
-@mcp.tool(description="Executes a SQL query against the database and returns the results.")
+@mcp.tool(
+    name="execute_query_{PREFIX}",
+    description="Executes a SQL query against the database and returns the results."
+)
 def execute_query(query: str, params: dict = {}) -> str:
     engine = get_engine()
     try:
