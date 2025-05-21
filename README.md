@@ -1,6 +1,6 @@
 # SQL Tool
 
-`sql_tool` is a command-line utility for exploring and querying SQL databases. It provides tools to list tables, inspect schema definitions, and execute SQL queries interactively.
+`sql-tool` is a command-line utility for exploring and querying SQL databases. It provides tools to list tables, inspect schema definitions, and execute SQL queries interactively.
 
 ## Features
 
