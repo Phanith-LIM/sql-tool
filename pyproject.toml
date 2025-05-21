@@ -1,5 +1,5 @@
 [project]
-name = "sql_tool"
+name = "sql-tool"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
