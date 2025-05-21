@@ -17,7 +17,7 @@ To install dependencies:
 pip install "git+https://github.com/Phanith-LIM/sql-tool.git"
 ```
 ```sh
-uv add "git@+github.com:Phanith-LIM/sql-tool.git"
+uv add "https://github.com/Phanith-LIM/sql-tool.git"
 ```
 ## Usage
 Start the server with the following command:
